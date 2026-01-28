@@ -2,16 +2,16 @@
 
 namespace App\Controller;
 
+use App\DTO\ChangeStatusInput;
 use App\Message\CreateTask;
 use App\Message\UpdateTaskStatus;
 use App\Repository\TaskRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 
 #[Route('/api/tasks')]
 class TaskController extends AbstractController
@@ -26,28 +26,9 @@ class TaskController extends AbstractController
 
     #[Route('', methods: ['POST'])]
     public function create(
-        Request $request,
-        MessageBusInterface $bus,
-        ValidatorInterface $validator
+        #[MapRequestPayload] CreateTask $command,
+        MessageBusInterface $bus
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        $command = new CreateTask(
-            title: $data['title'] ?? '',
-            description: $data['description'] ?? null,
-            priority: $data['priority'] ?? 1
-        );
-
-        $errors = $validator->validate($command);
-
-        if (count($errors) > 0) {
-            $errorMessages = [];
-            foreach ($errors as $error) {
-                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
-            }
-            return $this->json(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
-        }
-
         $bus->dispatch($command);
 
         return $this->json(['status' => 'Task created successfully'], Response::HTTP_CREATED);
@@ -56,20 +37,14 @@ class TaskController extends AbstractController
     #[Route('/{id}', methods: ['PATCH'])]
     public function updateStatus(
         int $id,
-        Request $request,
+        #[MapRequestPayload] ChangeStatusInput $input,
         MessageBusInterface $bus
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        if (!isset($data['status'])) {
-            return $this->json(['error' => 'Field "status" (boolean) is required'], Response::HTTP_BAD_REQUEST);
-        }
-
         $bus->dispatch(new UpdateTaskStatus(
             id: $id,
-            newStatus: (bool) $data['status']
+            newStatus: $input->status
         ));
 
-        return $this->json(['status' => 'Task status updated'], Response::HTTP_OK);
+        return $this->json(['status' => 'Task status updated']);
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { NewTask, Task } from './types';
 
+
 const API_URL = 'http://127.0.0.1:8000/api/tasks';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
+      
       setTasks(data);
     } catch (err) {
       console.error('Error fetching tasks:', err);
@@ -36,19 +38,19 @@ function App() {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(newTask),
       });
 
+      console.log(res)
       if (!res.ok) {
         const errData = await res.json();
-
         
-        if (errData.errors) {
-            const errorMessages = Object.values(errData.errors).join(', ');
-
-            console.log(errorMessages)
-            throw new Error(errorMessages);
+        if (errData.detail) {
+            throw new Error(errData.detail);
         }
         
         throw new Error(errData.error || 'Failed to save task.');
@@ -78,6 +80,7 @@ function App() {
       const updatedTasks = tasks.map(t =>
         t.id === task.id ? { ...t, status: !t.status } : t
       );
+
       setTasks(updatedTasks);
     } catch (err) {
       console.error('Error updating task status:', err);
