@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { NewTask, Task } from './types';
 
-
 const API_URL = 'http://127.0.0.1:8000/api/tasks';
 
-function App() {
+const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<NewTask>({ title: '', description: '', priority: 1 });
   const [loading, setLoading] = useState(false);
@@ -14,7 +13,7 @@ function App() {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
-      
+
       setTasks(data);
     } catch (err) {
       console.error('Error fetching tasks:', err);
@@ -45,7 +44,6 @@ function App() {
         body: JSON.stringify(newTask),
       });
 
-      console.log(res)
       if (!res.ok) {
         const errData = await res.json();
         
@@ -91,9 +89,11 @@ function App() {
     if (p === 3) {
       return 'bg-red-100 text-red-800 border-red-200';
     }
+
     if (p === 2) {
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
+
     return 'bg-green-100 text-green-800 border-green-200';
   };
 
